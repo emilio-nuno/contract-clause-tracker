@@ -10,8 +10,6 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy import ForeignKey, String
 from sqlalchemy import Text
 
-from pydantic import BaseModel
-
 DB_STRING_LENGTH = 255
 RGB_COLOR_LENGTH = 7
 
@@ -65,19 +63,3 @@ class Clause(Base):
 
     def __repr__(self) -> str:
         return f"Clause(id={self.id!r}, name={self.name!r}, color={self.color!r})"
-    
-"""
-Return Models
-"""
-class SentenceOut(BaseModel):
-    id: uuid.UUID
-    text: str
-    position: int
-    label_name: Optional[str]
-    label_color: Optional[str]
-
-class ContractOut(BaseModel):
-    id: uuid.UUID
-    filename: str
-    uploaded_at: datetime
-    sentences: list[SentenceOut] = []

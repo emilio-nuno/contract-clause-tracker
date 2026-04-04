@@ -1,6 +1,13 @@
-def main():
-    print("Hello from contract-clause-tracker!")
+from fastapi import FastAPI
 
+from app.routers.contracts import router as contracts_router
 
-if __name__ == "__main__":
-    main()
+app = FastAPI()
+
+app.include_router(
+    contracts_router
+)
+
+@app.get("/")
+def root():
+    return {"message": "Hello World"}
