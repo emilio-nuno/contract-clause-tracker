@@ -1,7 +1,7 @@
 import uuid
-from typing import Optional
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -14,9 +14,13 @@ router = APIRouter(
     tags=["contracts"]
 )
 
-@router.post("/", response_model=ContractOut,status_code=status.HTTP_201_CREATED)
-async def upload_contract(file: UploadFile, db: Session = Depends(get_db)):
-    if not file.filename.lower().endswith((".txt", ".md")):
+
+@router.post("/", response_model=ContractOut, status_code=status.HTTP_201_CREATED)
+async def upload_contract(
+    file: UploadFile,
+    db: Annotated[Session, Depends(get_db)],
+):
+    if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
         raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Only .txt and .md files are accepted.")
 
     content = await file.read()
@@ -35,11 +39,15 @@ async def upload_contract(file: UploadFile, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(contract)
-    
+
     return contract
 
+
 @router.get("/{contract_id}", response_model=ContractOut)
-def get_contract(contract_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_contract(
+    contract_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+):
     contract = db.get(Contract, contract_id)
     if not contract:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found.")
@@ -63,9 +71,9 @@ def get_contract(contract_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[ContractOut])
 def get_dashboard(
-    search: Optional[str] = None,
-    clause_id: Optional[uuid.UUID] = None,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    search: Annotated[Optional[str], Query()] = None,
+    clause_id: Annotated[Optional[uuid.UUID], Query()] = None,
 ):
     contracts = db.query(Contract)
 

@@ -19,3 +19,14 @@ class ContractOut(BaseModel):
     filename: str
     uploaded_at: datetime
     sentences: list[SentenceOut] = []
+
+
+class ClauseOut(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = None
+
+
+class SentenceLabelUpdate(BaseModel):
+    clause_id: Optional[UUID] = None
