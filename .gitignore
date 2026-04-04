@@ -107,6 +107,6 @@ venv.bak/
 
 .idea/*
 
-launch.json
+.vscode/
 
 *.db

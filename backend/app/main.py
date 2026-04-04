@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
         )
 
         contract3 = Contract(
-            filename="contract3.pdf",
+            filename="contract3.md",
             raw_text="All information shared under this contract is strictly confidential. The receiving party agrees not to disclose any proprietary data. Disputes shall be resolved through binding arbitration.",
         )
         sentence3_1 = Sentence(

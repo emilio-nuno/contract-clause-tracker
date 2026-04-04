@@ -148,8 +148,6 @@ def test_get_clauses_returns_all():
     assert {c["name"] for c in data} == {"Non-Compete", "Termination for Convenience"}
 
 
-# --- /sentences ---
-
 def test_update_sentence_label_success():
     with TestingSessionLocal() as db:
         clause_id = uuid.uuid4()
