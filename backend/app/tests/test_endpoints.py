@@ -37,8 +37,6 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
-# --- /contracts ---
-
 def test_upload_contract_success():
     file_content = b"This is sentence one. This is sentence two."
     file = {"file": ("contract.txt", file_content, "text/plain")}

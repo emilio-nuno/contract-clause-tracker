@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Contract, Sentence
-from app.schemas import ContractOut, SentenceOut
+from app.schemas import ContractOut, ContractSummaryOut, SentenceOut
 from app.services import parse_sentences
 
 router = APIRouter(
@@ -29,6 +29,9 @@ async def upload_contract(
     except UnicodeDecodeError:
         text = content.decode("utf-8", errors="replace")
 
+    if not text.strip():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File is empty.")
+
     contract = Contract(filename=file.filename, raw_text=text)
     db.add(contract)
 
@@ -40,7 +43,21 @@ async def upload_contract(
     db.commit()
     db.refresh(contract)
 
-    return contract
+    return ContractOut(
+        id=contract.id,
+        filename=contract.filename,
+        uploaded_at=contract.uploaded_at,
+        sentences=[
+            SentenceOut(
+                id=s.id,
+                text=s.text,
+                position=s.position,
+                label_name=s.label.name if s.label else None,
+                label_color=s.label.color if s.label else None,
+            )
+            for s in sorted(contract.sentences, key=lambda s: s.position)
+        ],
+    )
 
 
 @router.get("/{contract_id}", response_model=ContractOut)
@@ -69,7 +86,7 @@ def get_contract(
     )
 
 
-@router.get("/", response_model=list[ContractOut])
+@router.get("/", response_model=list[ContractSummaryOut])
 def get_dashboard(
     db: Annotated[Session, Depends(get_db)],
     search: Annotated[Optional[str], Query()] = None,
@@ -86,11 +103,10 @@ def get_dashboard(
         )
 
     return [
-        ContractOut(
+        ContractSummaryOut(
             id=c.id,
             filename=c.filename,
             uploaded_at=c.uploaded_at,
-            sentences=[],
         )
         for c in contracts.all()
     ]

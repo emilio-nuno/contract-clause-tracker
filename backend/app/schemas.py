@@ -14,6 +14,11 @@ class SentenceOut(BaseModel):
     label_name: Optional[str] = None
     label_color: Optional[str] = None
 
+class ContractSummaryOut(BaseModel):
+    id: UUID
+    filename: str
+    uploaded_at: datetime
+
 class ContractOut(BaseModel):
     id: UUID
     filename: str
