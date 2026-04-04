@@ -56,11 +56,11 @@ def test_upload_contract_invalid_extension():
 
 
 def test_get_contract_success():
-    db = TestingSessionLocal()
-    contract_id = uuid.uuid4()
-    dummy_contract = Contract(id=contract_id, filename="test.txt", raw_text="Hello world.")
-    db.add(dummy_contract)
-    db.commit()
+    with TestingSessionLocal() as db:
+        contract_id = uuid.uuid4()
+        dummy_contract = Contract(id=contract_id, filename="test.txt", raw_text="Hello world.")
+        db.add(dummy_contract)
+        db.commit()
     
     response = client.get(f"/contracts/{contract_id}")
     
@@ -80,10 +80,10 @@ def test_get_contract_not_found():
 
 
 def test_get_dashboard_search_filter():
-    db = TestingSessionLocal()
-    db.add(Contract(id=uuid.uuid4(), filename="employment_contract.txt", raw_text="..."))
-    db.add(Contract(id=uuid.uuid4(), filename="lease_agreement.txt", raw_text="..."))
-    db.commit()
+    with TestingSessionLocal() as db:
+        db.add(Contract(id=uuid.uuid4(), filename="employment_contract.txt", raw_text="..."))
+        db.add(Contract(id=uuid.uuid4(), filename="lease_agreement.txt", raw_text="..."))
+        db.commit()
     
     response = client.get("/contracts", params={"search": "lease"})
     
