@@ -3,18 +3,18 @@
 <mat-dialog-content>
   <div class="drop-area" (click)="fileInput.click()">
     <mat-icon>upload_file</mat-icon>
-    <p>{{ selectedFile ? selectedFile.name : 'Click to select a .txt or .md file' }}</p>
+    <p>{{ selectedFile() ? selectedFile()!.name : 'Click to select a .txt or .md file' }}</p>
   </div>
   <input #fileInput type="file" accept=".txt,.md" hidden (change)="onFileSelected($event)" />
 
-  @if (error) {
-    <p class="error">{{ error }}</p>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
   }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-flat-button color="primary" [disabled]="!selectedFile || uploading" (click)="upload()">
-    {{ uploading ? 'Uploading…' : 'Upload' }}
+  <button mat-flat-button color="primary" [disabled]="!selectedFile() || uploading()" (click)="upload()">
+    {{ uploading() ? 'Uploading…' : 'Upload' }}
   </button>
 </mat-dialog-actions>

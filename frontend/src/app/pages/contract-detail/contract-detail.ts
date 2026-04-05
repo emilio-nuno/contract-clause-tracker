@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,23 +33,23 @@ export class ContractDetail implements OnInit {
   private router = inject(Router);
   private api = inject(ApiService);
 
-  contract: ContractDetailData | null = null;
-  clauses: ClauseOut[] = [];
-  loading = true;
-  error = false;
-  editingSentenceId: string | null = null;
+  contract = signal<ContractDetailData | null>(null);
+  clauses = signal<ClauseOut[]>([]);
+  loading = signal(true);
+  error = signal(false);
+  editingSentenceId = signal<string | null>(null);
 
   private clauseNameToId = new Map<string, string>();
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.api.getClauses().subscribe(c => {
-      this.clauses = c;
+      this.clauses.set(c);
       this.clauseNameToId = new Map(c.map(clause => [clause.name, clause.id]));
     });
     this.api.getContract(id).subscribe({
-      next: (c: ContractDetailData) => { this.contract = c; this.loading = false; },
-      error: () => { this.loading = false; this.error = true; },
+      next: (c: ContractDetailData) => { this.contract.set(c); this.loading.set(false); },
+      error: () => { this.loading.set(false); this.error.set(true); },
     });
   }
 
@@ -59,20 +59,22 @@ export class ContractDetail implements OnInit {
 
   startEdit(sentenceId: string, event: Event) {
     event.stopPropagation();
-    this.editingSentenceId = sentenceId;
+    this.editingSentenceId.set(sentenceId);
   }
 
   applyLabel(sentence: SentenceOut, clauseId: string | null) {
     this.api.updateSentenceLabel(sentence.id, clauseId).subscribe(updated => {
       sentence.label_name = updated.label_name;
       sentence.label_color = updated.label_color;
-      this.editingSentenceId = null;
+      this.editingSentenceId.set(null);
+      // Trigger signal update so the template re-renders the mutated sentence
+      this.contract.update(c => c ? { ...c, sentences: [...c.sentences] } : c);
     });
   }
 
   cancelEdit(event: Event) {
     event.stopPropagation();
-    this.editingSentenceId = null;
+    this.editingSentenceId.set(null);
   }
 
   clauseIdForSentence(sentence: SentenceOut): string | null {

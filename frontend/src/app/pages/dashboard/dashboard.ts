@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -35,8 +35,10 @@ export class Dashboard implements OnInit {
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
-  contracts: ContractSummary[] = [];
-  clauses: ClauseOut[] = [];
+  contracts = signal<ContractSummary[]>([]);
+  clauses = signal<ClauseOut[]>([]);
+
+  // Plain properties for ngModel two-way binding
   search = '';
   selectedClauseId = '';
 
@@ -44,13 +46,13 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.load();
-    this.api.getClauses().subscribe(c => (this.clauses = c));
+    this.api.getClauses().subscribe(c => this.clauses.set(c));
   }
 
   load() {
     this.api
       .getContracts(this.search || undefined, this.selectedClauseId || undefined)
-      .subscribe(c => (this.contracts = c));
+      .subscribe(c => this.contracts.set(c));
   }
 
   openUpload() {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,25 +15,26 @@ export class UploadDialog {
   private api = inject(ApiService);
   private dialogRef = inject(MatDialogRef<UploadDialog>);
 
-  selectedFile: File | null = null;
-  uploading = false;
-  error = '';
+  selectedFile = signal<File | null>(null);
+  uploading = signal(false);
+  error = signal('');
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    this.selectedFile = input.files?.[0] ?? null;
-    this.error = '';
+    this.selectedFile.set(input.files?.[0] ?? null);
+    this.error.set('');
   }
 
   upload() {
-    if (!this.selectedFile) return;
-    this.uploading = true;
-    this.error = '';
-    this.api.uploadContract(this.selectedFile).subscribe({
+    const file = this.selectedFile();
+    if (!file) return;
+    this.uploading.set(true);
+    this.error.set('');
+    this.api.uploadContract(file).subscribe({
       next: () => this.dialogRef.close(true),
       error: err => {
-        this.error = err.error?.detail ?? 'Upload failed.';
-        this.uploading = false;
+        this.error.set(err.error?.detail ?? 'Upload failed.');
+        this.uploading.set(false);
       },
     });
   }
