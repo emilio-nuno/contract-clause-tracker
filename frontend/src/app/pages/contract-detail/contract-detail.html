@@ -1,1 +1,69 @@
-<p>contract-detail works!</p>
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="back()" matTooltip="Back to dashboard">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <div class="toolbar-title">
+    <span class="filename">{{ contract?.filename ?? 'Loading…' }}</span>
+    @if (contract) {
+      <span class="upload-date">Uploaded {{ contract.uploaded_at | date:'medium' }}</span>
+    }
+  </div>
+</mat-toolbar>
+
+@if (loading) {
+  <div class="loading-state">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+} @else if (error) {
+  <p class="status-message">Contract not found.</p>
+} @else if (contract) {
+  @if (contract.sentences.length === 0) {
+    <p class="status-message">No sentences found in this contract.</p>
+  } @else {
+    <div class="sentences-container" (click)="editingSentenceId = null">
+      @for (sentence of contract.sentences; track sentence.id) {
+        <div
+          class="sentence-row"
+          [class.editing]="editingSentenceId === sentence.id"
+          (click)="startEdit(sentence.id, $event)"
+        >
+          <span class="position">{{ sentence.position + 1 }}</span>
+          <span class="text">{{ sentence.text }}</span>
+          <div class="label-area" (click)="$event.stopPropagation()">
+            @if (editingSentenceId === sentence.id) {
+              <mat-form-field appearance="outline" class="clause-field">
+                <mat-label>Clause type</mat-label>
+                <mat-select
+                  [value]="clauseIdForSentence(sentence)"
+                  (selectionChange)="applyLabel(sentence, $event.value)"
+                >
+                  <mat-option [value]="null">— Remove label —</mat-option>
+                  @for (clause of clauses; track clause.id) {
+                    <mat-option [value]="clause.id">{{ clause.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button class="cancel-btn" (click)="cancelEdit($event)" matTooltip="Cancel">
+                <mat-icon>close</mat-icon>
+              </button>
+            } @else {
+              @if (sentence.label_name) {
+                <span
+                  class="label-chip"
+                  [style.background-color]="sentence.label_color + '22'"
+                  [style.color]="sentence.label_color"
+                  [style.border-color]="sentence.label_color + '88'"
+                  matTooltip="Click row to change label"
+                >
+                  {{ sentence.label_name }}
+                </span>
+              } @else {
+                <span class="unlabeled" matTooltip="Click row to add label">Unlabeled</span>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

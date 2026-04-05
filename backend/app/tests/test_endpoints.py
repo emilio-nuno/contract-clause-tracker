@@ -50,6 +50,15 @@ def test_upload_contract_success():
     assert len(data["sentences"]) == 2
 
 
+def test_upload_contract_empty_file():
+    file = {"file": ("contract.txt", b"   \n\t  ", "text/plain")}
+
+    response = client.post("/contracts/", files=file)
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "File is empty."
+
+
 def test_upload_contract_invalid_extension():
     file = {"file": ("contract.pdf", b"Some pdf content", "application/pdf")}
 

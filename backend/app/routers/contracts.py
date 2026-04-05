@@ -30,7 +30,7 @@ async def upload_contract(
         text = content.decode("utf-8", errors="replace")
 
     if not text.strip():
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File is empty.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="File is empty.")
 
     contract = Contract(filename=file.filename, raw_text=text)
     db.add(contract)
