@@ -2,11 +2,11 @@ import uuid
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Contract, Sentence
-from app.schemas import ContractOut, ContractSummaryOut, SentenceOut
+from app.schemas import ContractOut, ContractSummaryOut
 from app.services import parse_sentences
 
 router = APIRouter(
@@ -23,11 +23,7 @@ async def upload_contract(
     if not file.filename or not file.filename.lower().endswith((".txt", ".md")):
         raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Only .txt and .md files are accepted.")
 
-    content = await file.read()
-    try:
-        text = content.decode("utf-8")
-    except UnicodeDecodeError:
-        text = content.decode("utf-8", errors="replace")
+    text = (await file.read()).decode("utf-8", errors="replace")
 
     if not text.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="File is empty.")
@@ -42,22 +38,7 @@ async def upload_contract(
 
     db.commit()
     db.refresh(contract)
-
-    return ContractOut(
-        id=contract.id,
-        filename=contract.filename,
-        uploaded_at=contract.uploaded_at,
-        sentences=[
-            SentenceOut(
-                id=s.id,
-                text=s.text,
-                position=s.position,
-                label_name=s.label.name if s.label else None,
-                label_color=s.label.color if s.label else None,
-            )
-            for s in sorted(contract.sentences, key=lambda s: s.position)
-        ],
-    )
+    return contract
 
 
 @router.get("/{contract_id}", response_model=ContractOut)
@@ -65,25 +46,15 @@ def get_contract(
     contract_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
 ):
-    contract = db.get(Contract, contract_id)
+    contract = (
+        db.query(Contract)
+        .options(selectinload(Contract.sentences).selectinload(Sentence.label))
+        .filter(Contract.id == contract_id)
+        .first()
+    )
     if not contract:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found.")
-
-    return ContractOut(
-        id=contract.id,
-        filename=contract.filename,
-        uploaded_at=contract.uploaded_at,
-        sentences=[
-            SentenceOut(
-                id=s.id,
-                text=s.text,
-                position=s.position,
-                label_name=s.label.name if s.label else None,
-                label_color=s.label.color if s.label else None,
-            )
-            for s in sorted(contract.sentences, key=lambda s: s.position)
-        ],
-    )
+    return contract
 
 
 @router.get("/", response_model=list[ContractSummaryOut])
@@ -102,11 +73,4 @@ def get_dashboard(
             Contract.sentences.any(Sentence.label_id == clause_id)
         )
 
-    return [
-        ContractSummaryOut(
-            id=c.id,
-            filename=c.filename,
-            uploaded_at=c.uploaded_at,
-        )
-        for c in contracts.all()
-    ]
+    return contracts.all()

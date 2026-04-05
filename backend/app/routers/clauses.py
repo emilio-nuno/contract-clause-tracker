@@ -15,12 +15,4 @@ router = APIRouter(
 
 @router.get("/", response_model=list[ClauseOut])
 def get_clauses(db: Annotated[Session, Depends(get_db)]):
-    return [
-        ClauseOut(
-            id=c.id,
-            name=c.name,
-            description=c.description,
-            color=c.color,
-        )
-        for c in db.query(Clause).all()
-    ]
+    return db.query(Clause).all()

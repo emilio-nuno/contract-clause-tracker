@@ -97,8 +97,3 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 app.include_router(contracts_router)
 app.include_router(clauses_router)
 app.include_router(sentences_router)
-
-
-@app.get("/")
-def root():
-    return {"message": "Hello World"}
