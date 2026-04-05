@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -39,14 +39,13 @@ export class ContractDetail implements OnInit {
   error = signal(false);
   editingSentenceId = signal<string | null>(null);
 
-  private clauseNameToId = new Map<string, string>();
+  private clauseNameToId = computed(() =>
+    new Map(this.clauses().map(c => [c.name, c.id]))
+  );
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
-    this.api.getClauses().subscribe(c => {
-      this.clauses.set(c);
-      this.clauseNameToId = new Map(c.map(clause => [clause.name, clause.id]));
-    });
+    this.api.getClauses().subscribe(c => this.clauses.set(c));
     this.api.getContract(id).subscribe({
       next: (c: ContractDetailData) => { this.contract.set(c); this.loading.set(false); },
       error: () => { this.loading.set(false); this.error.set(true); },
@@ -67,8 +66,7 @@ export class ContractDetail implements OnInit {
       sentence.label_name = updated.label_name;
       sentence.label_color = updated.label_color;
       this.editingSentenceId.set(null);
-      // Trigger signal update so the template re-renders the mutated sentence
-      this.contract.update(c => c ? { ...c, sentences: [...c.sentences] } : c);
+      this.contract.update(c => c ? { ...c } : c);
     });
   }
 
@@ -79,6 +77,6 @@ export class ContractDetail implements OnInit {
 
   clauseIdForSentence(sentence: SentenceOut): string | null {
     if (!sentence.label_name) return null;
-    return this.clauseNameToId.get(sentence.label_name) ?? null;
+    return this.clauseNameToId().get(sentence.label_name) ?? null;
   }
 }

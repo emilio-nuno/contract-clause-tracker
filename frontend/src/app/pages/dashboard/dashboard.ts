@@ -38,7 +38,6 @@ export class Dashboard implements OnInit {
   contracts = signal<ContractSummary[]>([]);
   clauses = signal<ClauseOut[]>([]);
 
-  // Plain properties for ngModel two-way binding
   search = '';
   selectedClauseId = '';
 
